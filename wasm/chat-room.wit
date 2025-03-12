@@ -1,0 +1,8 @@
+package local:chat-room;
+
+world chat-room {
+  import publish-message: func(message: string) -> result<string, string>;
+  export init: func() -> list<string>;
+  export add-message: func(message: string) -> result<string, string>;
+  export message-added: func(message: string, state: list<string>) -> list<string>;
+}

@@ -1,0 +1,1 @@
+npx jco componentize -w chat-room.wit -o chat-room.wasm chat-room.js
