@@ -1,5 +1,5 @@
-defmodule Wasmio2025Web.ChatLive do
-  alias Phoenix.PubSub
+defmodule Wasmio2025Web.WasmexChatLive do
+alias Phoenix.PubSub
   use Wasmio2025Web, :live_view
 
   def render(assigns) do
@@ -21,15 +21,17 @@ defmodule Wasmio2025Web.ChatLive do
 
   def mount(_params, _session, socket) do
     PubSub.subscribe(Wasmio2025.PubSub, "chat")
-    {:ok, socket |> assign(:messages, [])}
+    {:ok, state} = Wasmex.Components.call_function(Wasmio2025.ChatRoom, "init", [])
+    {:ok, socket |> assign(:messages, state)}
   end
 
   def handle_event("add_message", %{"message" => message}, socket) do
-    Phoenix.PubSub.broadcast(Wasmio2025.PubSub, "chat", message)
+    {:ok, _result} = Wasmex.Components.call_function(Wasmio2025.ChatRoom, "add-message", [message])
     {:noreply, socket}
   end
 
   def handle_info(message, socket) do
-    {:noreply, socket |> assign(:messages, [message | socket.assigns.messages])}
+    {:ok, messages} = Wasmex.Components.call_function(Wasmio2025.ChatRoom, "message-added", [message, socket.assigns.messages])
+    {:noreply, socket |> assign(:messages, messages)}
   end
 end

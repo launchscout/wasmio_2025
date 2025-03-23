@@ -3,33 +3,27 @@ defmodule Wasmio2025.Stack do
 
   # Callbacks
 
-  def start_link(default) when is_binary(default) do
-    GenServer.start_link(__MODULE__, default, name: :stack)
+  def start_link(_) do
+    GenServer.start_link(__MODULE__, [], name: :stack)
   end
 
-  def push(pid, element) do
-    GenServer.cast(pid, {:push, element})
+  def push(element) do
+    GenServer.cast(:stack, {:push, element})
   end
 
-  def pop(pid) do
-    GenServer.call(pid, :pop)
+  def pop() do
+    GenServer.call(:stack, :pop)
   end
 
   @impl true
-  def init(elements) do
-    initial_state = String.split(elements, ",", trim: true)
-    {:ok, initial_state}
+  def init(_) do
+    {:ok, []}
   end
 
   @impl true
   def handle_call(:pop, _from, state) do
     [to_caller | new_state] = state
     {:reply, to_caller, new_state}
-  end
-
-  @impl true
-  def handle_cast({:push, 9}, _state) do
-    raise "OMG nine is a terrible number AAAARRRGH!"
   end
 
   def handle_cast({:push, element}, state) do

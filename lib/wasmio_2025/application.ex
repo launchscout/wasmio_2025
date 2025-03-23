@@ -12,11 +12,11 @@ defmodule Wasmio2025.Application do
       Wasmio2025.Repo,
       {DNSCluster, query: Application.get_env(:wasmio_2025, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Wasmio2025.PubSub},
+      Wasmio2025.Stack,
       # Start the Finch HTTP client for sending emails
       {Finch, name: Wasmio2025.Finch},
       # Start a worker by calling: Wasmio2025.Worker.start_link(arg)
       # {Wasmio2025.Worker, arg},
-      {Wasmio2025.Stack, "1,2,3"},
       {Wasmex.Components,
        name: Wasmio2025.ChatRoom,
        path: "wasm/chat-room.wasm",

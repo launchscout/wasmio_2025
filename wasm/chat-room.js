@@ -1,13 +1,13 @@
 import publishMessage from 'publish-message';
 
-const secretWord = 'flibberty gibber';
+const secretWord = 'WAT';
 
 export function addMessage(message) {
   if (message === secretWord) {
     throw new Error('You said the secret word aaaaaa!!!');
   }
-  publishMessage("Here is a message from a wasm component!!");
-  return publishMessage(message);
+  publishMessage(message);
+  publishMessage("And here is a message from a wasm component!!");
 }
 
 export function init() {

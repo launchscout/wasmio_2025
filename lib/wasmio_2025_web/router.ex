@@ -19,6 +19,7 @@ defmodule Wasmio2025Web.Router do
 
     get "/", PageController, :home
     live "/chat", ChatLive
+    live "/wasmex-chat", WasmexChatLive
   end
 
   # Other scopes may use custom stacks.

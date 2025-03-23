@@ -6,63 +6,51 @@ marp: true
 
 ---
 
+# Intro
+
+---
+
+# Agenda
+- Elixir
+- OTP
+- Wasmex
+- Demo time!
+- Future thoughts
+
+---
+
 # Elixir
 - Functional language for the BEAM VM (Erlang)
+- All datastructures are immutable
+- Dynamically typed
+  - gradual type system in-progress
 - Friendly, Ruby inspired syntax
 - Created by Jose Valim 
 
 ---
 
-# What's so great about 
----
-# OTP
+# What's so great about the BEAM?
+- Very mature (started in the 80s)
+- OTP = Open Telecom Platform
+- Designed for telecommunications
+  - highly concurrent
+  - highly available
 
 ---
 
-# LiveView
+# Processes on the BEAM
 
----
-# Erlang/OTP: A Brief Introduction
-
-- **Erlang**: Programming language designed for concurrency and reliability
-- **OTP (Open Telecom Platform)**: Collection of middleware, libraries, and tools
-- Created at Ericsson in the 1980s for telecom systems
-- Designed for systems that are:
-  - Concurrent
-  - Distributed
-  - Fault-tolerant
-  - Highly available (99.9999% uptime = 31 seconds downtime per year)
-
----
-
-# Key Concepts in Elixir/OTP
-
-- **Processes**: Lightweight, isolated units of computation
-- **Message Passing**: Processes communicate by sending messages
-- **Pattern Matching**: Elegant way to process data and messages
-- **Functional Programming**: Immutable data, no shared state
-- **Distribution**: Built-in support for distributed computing
-- **Hot Code Swapping**: Update code without stopping the system
-
----
-
-# The Process Model
-
-- Processes are the fundamental building blocks
 - Extremely lightweight (< 2KB per process)
 - Isolated memory (no shared state)
+- Only communicate via message passing
 - Can create millions of processes on a single machine
-- Each process has its own:
-  - Mailbox for messages
-  - Stack
-  - Heap
-  - Process ID (PID)
+- **Concurrency without locks!**
 
 ---
 
-# Example GenServer
+# A stateful stack
 ```elixir
-defmodule Stack do
+defmodule Wasmio2025.Stack do
   use GenServer
 
   # Callbacks
@@ -83,16 +71,13 @@ defmodule Stack do
     new_state = [element | state]
     {:noreply, new_state}
   end
+  
 end
 ```
 
 ---
 
-# Concurrency Without Locks
-
----
-
-# OTP Supervision: The Big Idea
+# Supervising Processes
 
 - Processes are organized in hierarchical **supervision trees**
 - **Supervisors** monitor **workers** (and other supervisors)
@@ -104,10 +89,7 @@ end
 
 ---
 
-# Let It Crash Philosophy
-
-> "The error handling philosophy of Erlang is different: *Let some processes crash*"
-
+# Let It Crash
 - Don't try to prevent all errors with defensive programming
 - Focus on error recovery instead of error prevention
 - Embrace failure as a normal part of the system
@@ -116,35 +98,27 @@ end
 
 ---
 
-# Supervision Strategies
+# A supervised stack
+```elixir
+defmodule Wasmio2025.Application do
 
-- **one_for_one**: Restart only the failed child
-- **one_for_all**: Restart all children if one fails
-- **rest_for_one**: Restart the failed child and all children started after it
-- **simple_one_for_one**: For dynamic child processes
+  use Application
 
----
-
-# Example Supervision Tree
-
----
-
-# Benefits of Supervision
-
-- **Fault Isolation**: Failures are contained
-- **Self Healing**: System can recover automatically
-- **Predictable Behavior**: Clear strategies for handling failures
-- **Simplified Error Handling**: No need for complex try/catch in business logic
-- **Design for Failure**: Forces you to think about failure scenarios
+  @impl true
+  def start(_type, _args) do
+    children = [
+      ...others...
+      Wasmio20205.Stack
+    ]
+    opts = [strategy: :one_for_one, name: Wasmio2025.Supervisor]
+    Supervisor.start_link(children, opts)
+  end
+end
+```
 
 ---
 
-# Real-World Applications
-
-- **WhatsApp**: Scaled to billions of users with Erlang
-- **Discord**: Uses Elixir (built on BEAM/Erlang) for real-time communication
-- **RabbitMQ**: Message broker written in Erlang
-- **Riak**: Distributed database
+# supervised stack demo
 
 ---
 
@@ -157,16 +131,178 @@ end
 
 ---
 
-# wasmex
-- elixir meets wasmtime
-- uses rustler, the rust elixir bridge
-- Added support for component model in XXX
-- Supports all types except resources
-- Supports imported functions from Elixir
+# LiveView [chat](/chat)
+```elixir
+defmodule Wasmio2025Web.ChatLive do
+  alias Phoenix.PubSub
+  use Wasmio2025Web, :live_view
+
+  def render(assigns) do
+    ~H"""
+    <div>
+      <h1>Chat</h1>
+      <ul>
+        <li :for={message <- @messages}>
+          {message}
+        </li>
+      </ul>
+      <form phx-submit="add_message">
+        <input type="text" name="message" />
+        <button type="submit">Add</button>
+      </form>
+    </div>
+    """
+  end
+```
 
 ---
 
-# What if we put them together?
+# Chat continued..
+```elixir
+  def mount(_params, _session, socket) do
+    PubSub.subscribe(Wasmio2025.PubSub, "chat")
+    {:ok, socket |> assign(:messages, [])}
+  end
+
+  def handle_event("add_message", %{"message" => message}, socket) do
+    Phoenix.PubSub.broadcast(Wasmio2025.PubSub, "chat", message)
+    {:noreply, socket}
+  end
+
+  def handle_info(message, socket) do
+    {:noreply, socket |> assign(:messages, [message | socket.assigns.messages])}
+  end
+end
+```
+
+---
+
+# LiveView chat demo
+
+---
+
+# wasmex
+- elixir meets wasmtime
+- started by Philip Tessenow in 2022
+- uses rustler, the rust elixir bridge
+- embraces the OTP model
+  - runs WASM in separate, supervised processes
+  - communicate via message passing
+
+---
+
+# wasmex status
+- component model support added in 0.10
+- supports:
+  - all of the wasm types mapped to Elixir types
+  - interfaces
+  - imports implemented in Elixir
+    - async message passing behind a sync veneer
+- resources still TBD
+
+---
+
+# Let's make a chatserver wasm component!
+
+---
+
+# Our wit
+```wit
+package local:chat-room;
+
+world chat-room {
+  import publish-message: func(message: string) -> result<string, string>;
+  export init: func() -> list<string>;
+  export add-message: func(message: string) -> result<string, string>;
+  export message-added: func(message: string, state: list<string>) -> list<string>;
+}
+```
+
+---
+
+# chat-room.js
+
+```js
+import publishMessage from 'publish-message';
+
+const secretWord = 'WAT';
+
+export function addMessage(message) {
+  if (message === secretWord) {
+    throw new Error('You said the secret word aaaaaa!!!');
+  }
+  publishMessage(message);
+  publishMessage("And here is a message from a wasm component!!");
+}
+
+export function init() {
+  return ["You joined the wasm component chat!"];
+}
+
+export function messageAdded(message, messages) {
+  return [...messages, message];
+}
+```
+
+---
+# Supervising our chat room component
+```elixir
+defmodule Wasmio2025.Application do
+  use Application
+
+  @impl true
+  def start(_type, _args) do
+    children = [
+      ...
+      {Wasmex.Components,
+       name: Wasmio2025.ChatRoom,
+       path: "wasm/chat-room.wasm",
+       imports: %{
+         "publish-message" =>
+           {:fn,
+            fn message ->
+              Phoenix.PubSub.broadcast(Wasmio2025.PubSub, "chat", message)
+              {:ok, "#{message} published"}
+            end}
+       },
+       wasi: %Wasmex.Wasi.WasiP2Options{allow_http: true}},
+    ]
+
+    opts = [strategy: :one_for_one, name: Wasmio2025.Supervisor]
+    Supervisor.start_link(children, opts)
+  end
+```
+---
+
+# wasmex chat
+```elixir
+  def mount(_params, _session, socket) do
+    PubSub.subscribe(Wasmio2025.PubSub, "chat")
+    {:ok, state} = Wasmex.Components.call_function(Wasmio2025.ChatRoom, "init", [])
+    {:ok, socket |> assign(:messages, state)}
+  end
+
+  def handle_event("add_message", %{"message" => message}, socket) do
+    {:ok, _result} = Wasmex.Components.call_function(Wasmio2025.ChatRoom, "add-message", [message])
+    {:noreply, socket}
+  end
+
+  def handle_info(message, socket) do
+    {:ok, messages} = Wasmex.Components.call_function(Wasmio2025.ChatRoom, "message-added", [message, socket.assigns.messages])
+    {:noreply, socket |> assign(:messages, messages)}
+  end
+```
+
+---
+
+# [Let's try it!!](/wasmex-chat)
+
+---
+
+# Wasmex future
+- Implement resources
+- Get people using it!
+- **Extending SAAS platforms with wasm components**
 
 ---
 

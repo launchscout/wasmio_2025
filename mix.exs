@@ -58,7 +58,7 @@ defmodule Wasmio2025.MixProject do
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.5"},
-      {:wasmex, "~> 0.9.3", path: "../wasmex"}
+      {:wasmex, "~> 0.10.0"}
     ]
   end
 
