@@ -8,6 +8,7 @@ export function addMessage(message) {
   }
   publishMessage(message);
   publishMessage("And here is a message from a wasm component!!");
+  return message;
 }
 
 export function init() {

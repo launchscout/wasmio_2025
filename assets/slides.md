@@ -12,7 +12,7 @@ marp: true
 
 # Agenda
 - Elixir
-- OTP
+- Erlang and OTP
 - Wasmex
 - Demo time!
 - Future thoughts
@@ -48,35 +48,6 @@ marp: true
 
 ---
 
-# A stateful stack
-```elixir
-defmodule Wasmio2025.Stack do
-  use GenServer
-
-  # Callbacks
-
-  @impl true
-  def init(_) do
-    {:ok, []}
-  end
-
-  @impl true
-  def handle_call(:pop, _from, state) do
-    [to_caller | new_state] = state
-    {:reply, to_caller, new_state}
-  end
-
-  @impl true
-  def handle_cast({:push, element}, state) do
-    new_state = [element | state]
-    {:noreply, new_state}
-  end
-  
-end
-```
-
----
-
 # Supervising Processes
 
 - Processes are organized in hierarchical **supervision trees**
@@ -86,46 +57,15 @@ end
   - Restart all its children
   - Escalate to its own supervisor
   - Shut everything down
-
----
-
-# Let It Crash
-- Don't try to prevent all errors with defensive programming
-- Focus on error recovery instead of error prevention
-- Embrace failure as a normal part of the system
-- Isolate failures to prevent cascading effects
-- Recover from failures through restarts
-
----
-
-# A supervised stack
-```elixir
-defmodule Wasmio2025.Application do
-
-  use Application
-
-  @impl true
-  def start(_type, _args) do
-    children = [
-      ...others...
-      Wasmio20205.Stack
-    ]
-    opts = [strategy: :one_for_one, name: Wasmio2025.Supervisor]
-    Supervisor.start_link(children, opts)
-  end
-end
-```
-
----
-
-# supervised stack demo
+- **Let It Crash**
 
 ---
 
 # Phoenix LiveView
-- Huge productivity boost for web apps
-- App is all elixir, state updates pushed to client
+- Sub-project of Phoenix
+- Server rendered app that quacks like a SPA
 - Tiny processes maintain state for *every connected client*
+- state updates pushed over a websocket connection
 - Only works because of OTP
 - Proven to scale to millions of connections per server
 
