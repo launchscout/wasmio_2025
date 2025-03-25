@@ -134,7 +134,7 @@ end
 # wasmex and the component model
 - component model support added in 0.10
 - low level API
-- "bindgenish" macro for idiomatic Elixir supprot
+- "bindgenish" macro for idiomatic Elixir support
 - supports:
   - all of the wasm types mapped to Elixir types
   - interfaces
@@ -157,7 +157,7 @@ end
   </tr>
   <tr>
     <td>Record</td>
-    <td>map</td>
+    <td>map (structs TBD)</td>
   </tr>
   <tr>
     <td>Variant</td>
