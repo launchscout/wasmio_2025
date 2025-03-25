@@ -131,14 +131,55 @@ end
 
 ---
 
-# wasmex status
+# wasmex and the component model
 - component model support added in 0.10
+- low level API
+- "bindgenish" macro for idiomatic Elixir supprot
 - supports:
   - all of the wasm types mapped to Elixir types
   - interfaces
   - imports implemented in Elixir
     - async message passing behind a sync veneer
 - resources still TBD
+
+---
+
+# WIT type mappings
+
+<table>
+  <tr>
+    <th>WIT</th>
+    <th>Elixir</th>
+  </tr>
+  <tr>
+    <td>String, UXX, SXX, FloatXX, bool, List</td>
+    <td>direct equivalent in Elixir</td>
+  </tr>
+  <tr>
+    <td>Record</td>
+    <td>map</td>
+  </tr>
+  <tr>
+    <td>Variant</td>
+    <td>{:atom, value}</td>
+  </tr>
+  <tr>
+    <td>Result</td>
+    <td>{:ok, value} or {:error, value}</td>
+  </tr>
+  <tr>
+    <td>Flags</td>
+    <td>map of booleans</td>
+  </tr>
+  <tr>
+    <td>Enum</td>
+    <td>atom</td>
+  </tr>
+  <tr>
+    <td>Option</td>
+    <td>value or nil</td>
+  </tr>
+</table>
 
 ---
 
@@ -165,12 +206,7 @@ world chat-room {
 ```js
 import publishMessage from 'publish-message';
 
-const secretWord = 'WAT';
-
 export function addMessage(message) {
-  if (message === secretWord) {
-    throw new Error('You said the secret word aaaaaa!!!');
-  }
   publishMessage(message);
   publishMessage("And here is a message from a wasm component!!");
 }
@@ -185,7 +221,25 @@ export function messageAdded(message, messages) {
 ```
 
 ---
-# Supervising our chat room component
+# Creating our ChatServer
+```elixir
+defmodule Wasmio2025.ChatServer do
+  use Wasmex.Components.ComponentServer,
+    wit: "wasm/chat-room.wit",
+    imports: %{
+      "publish-message" => {:fn, &publish_message/1}
+    },
+    wasi: %Wasmex.Wasi.WasiP2Options{allow_http: true}
+
+
+  def publish_message(message) do
+    Phoenix.PubSub.broadcast(Wasmio2025.PubSub, "chat", message)
+    {:ok, "#{message} published"}
+  end
+end
+```
+---
+# Supervising our chat server
 ```elixir
 defmodule Wasmio2025.Application do
   use Application
@@ -194,17 +248,9 @@ defmodule Wasmio2025.Application do
   def start(_type, _args) do
     children = [
       ...
-      {Wasmex.Components,
+      {Wasmio2025.ChatServer,
        name: Wasmio2025.ChatRoom,
        path: "wasm/chat-room.wasm",
-       imports: %{
-         "publish-message" =>
-           {:fn,
-            fn message ->
-              Phoenix.PubSub.broadcast(Wasmio2025.PubSub, "chat", message)
-              {:ok, "#{message} published"}
-            end}
-       },
        wasi: %Wasmex.Wasi.WasiP2Options{allow_http: true}},
     ]
 
@@ -214,21 +260,21 @@ defmodule Wasmio2025.Application do
 ```
 ---
 
-# wasmex chat
+# Using ChatServer from LiveView
 ```elixir
   def mount(_params, _session, socket) do
     PubSub.subscribe(Wasmio2025.PubSub, "chat")
-    {:ok, state} = Wasmex.Components.call_function(Wasmio2025.ChatRoom, "init", [])
+    {:ok, state} = ChatServer.init(Wasmio2025.ChatRoom)
     {:ok, socket |> assign(:messages, state)}
   end
 
   def handle_event("add_message", %{"message" => message}, socket) do
-    {:ok, _result} = Wasmex.Components.call_function(Wasmio2025.ChatRoom, "add-message", [message])
+    {:ok, _message} = ChatServer.add_message(Wasmio2025.ChatRoom, message)
     {:noreply, socket}
   end
 
-  def handle_info(message, socket) do
-    {:ok, messages} = Wasmex.Components.call_function(Wasmio2025.ChatRoom, "message-added", [message, socket.assigns.messages])
+  def handle_info(message, %{assigns: %{messages: messages}} = socket) do
+    {:ok, messages} = ChatServer.message_added(Wasmio2025.ChatRoom, message, messages)
     {:noreply, socket |> assign(:messages, messages)}
   end
 ```
@@ -239,10 +285,15 @@ defmodule Wasmio2025.Application do
 
 ---
 
+# Let's break it!
+
+---
+
 # Wasmex future
 - Implement resources
 - Get people using it!
 - **Extending SAAS platforms with wasm components**
+- Polyglot LiveView (or similar)
 
 ---
 

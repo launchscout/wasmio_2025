@@ -17,17 +17,9 @@ defmodule Wasmio2025.Application do
       {Finch, name: Wasmio2025.Finch},
       # Start a worker by calling: Wasmio2025.Worker.start_link(arg)
       # {Wasmio2025.Worker, arg},
-      {Wasmex.Components,
+      {Wasmio2025.ChatServer,
        name: Wasmio2025.ChatRoom,
        path: "wasm/chat-room.wasm",
-       imports: %{
-         "publish-message" =>
-           {:fn,
-            fn message ->
-              Phoenix.PubSub.broadcast(Wasmio2025.PubSub, "chat", message)
-              {:ok, "#{message} published"}
-            end}
-       },
        wasi: %Wasmex.Wasi.WasiP2Options{allow_http: true}},
       # Start to serve requests, typically the last entry
       Wasmio2025Web.Endpoint
