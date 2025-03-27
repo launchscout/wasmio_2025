@@ -3,8 +3,7 @@ defmodule Wasmio2025.ChatServer do
     wit: "wasm/chat-room.wit",
     imports: %{
       "publish-message" => {:fn, &publish_message/1}
-    },
-    wasi: %Wasmex.Wasi.WasiP2Options{allow_http: true}
+    }
 
 
   def publish_message(message) do

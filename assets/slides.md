@@ -30,7 +30,7 @@ style: |
   }
 ---
 
-# Supervising your WASM Components with wasmex
+# Supervising WebAssembly Components with wasmex
 Chris Nelson
 @superchris.launchscout.com (BlueSky)
 github.com/superchris
@@ -90,11 +90,43 @@ github.com/superchris
 
 ---
 
+# A stack with a bug
+```elixir
+defmodule Wasmio2025.Stack do
+  use GenServer
+
+  ...
+
+  @impl true
+  def init(_) do
+    {:ok, []}
+  end
+
+  @impl true
+  def handle_call(:pop, _from, stack) do
+    [head | tail] = state
+    {:reply, to_caller, tail}
+  end
+
+  def handle_cast({:push, element}, stack) do
+    new_state = [element | stack]
+    {:noreply, new_state}
+  end
+
+end
+```
+
+---
+
+# Let's crash our Stack!
+
+---
+
 # Phoenix LiveView
 - Sub-project of Phoenix
 - Server rendered app that quacks like a SPA
+- events are sent, state updates received over a websocket connection
 - Tiny processes maintain state for *every connected client*
-- state updates pushed over a websocket connection
 - Only works because of OTP
 - Proven to scale to millions of connections per server
 
@@ -257,9 +289,7 @@ defmodule Wasmio2025.ChatServer do
     wit: "wasm/chat-room.wit",
     imports: %{
       "publish-message" => {:fn, &publish_message/1}
-    },
-    wasi: %Wasmex.Wasi.WasiP2Options{allow_http: true}
-
+    }
 
   def publish_message(message) do
     Phoenix.PubSub.broadcast(Wasmio2025.PubSub, "chat", message)
@@ -320,6 +350,7 @@ defmodule Wasmio2025.Application do
 
 # Wasmex future
 - Implement resources
+- better config for capabilities
 - Get people using it!
 - **Extending SAAS platforms with wasm components**
 - Polyglot LiveView (or similar)
