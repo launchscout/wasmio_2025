@@ -1,12 +1,40 @@
 ---
 marp: true
+style: |
+
+  section h1 {
+    color: #6042BC;
+  }
+
+  section code {
+    background-color: #e0e0ff;
+  }
+
+  footer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 100px;
+  }
+
+  footer img {
+    position: absolute;
+    width: 120px;
+    right: 20px;
+    top: 0;
+
+  }
+  section #title-slide-logo {
+    margin-left: -60px;
+  }
 ---
 
-# Supervise Anything!
-
----
-
-# Intro
+# Supervising your WASM Components with wasmex
+Chris Nelson
+@superchris.launchscout.com (BlueSky)
+github.com/superchris
+![h:200](/images/full-color.png#title-slide-logo)
 
 ---
 
@@ -30,8 +58,9 @@ marp: true
 ---
 
 # What's so great about the BEAM?
-- Very mature (started in the 80s)
-- OTP = Open Telecom Platform
+- Very mature
+  - Started by Ericsson in the 80s
+- OTP = Open Telecom Platforms
 - Designed for telecommunications
   - highly concurrent
   - highly available
