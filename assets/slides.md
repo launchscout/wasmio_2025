@@ -359,6 +359,8 @@ defmodule Wasmio2025.Application do
 
 # Thank You!
 
+![h:400](/images/qr-code.png)
+
 Questions?
 
 ---
