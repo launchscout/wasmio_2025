@@ -39,8 +39,7 @@ github.com/superchris
 ---
 
 # Agenda
-- Elixir
-- Erlang and OTP
+- Elixir and OTP
 - Wasmex
 - Demo time!
 - Future thoughts
@@ -60,7 +59,7 @@ github.com/superchris
 # What's so great about the BEAM?
 - Very mature
   - Started by Ericsson in the 80s
-- OTP = Open Telecom Platforms
+- OTP = Open Telecom Platform
 - Designed for telecommunications
   - highly concurrent
   - highly available
@@ -310,7 +309,7 @@ defmodule Wasmio2025.Application do
       {Wasmio2025.ChatServer,
        name: Wasmio2025.ChatRoom,
        path: "wasm/chat-room.wasm",
-       wasi: %Wasmex.Wasi.WasiP2Options{allow_http: true}},
+       wasi: %Wasmex.Wasi.WasiP2Options{}},
     ]
 
     opts = [strategy: :one_for_one, name: Wasmio2025.Supervisor]

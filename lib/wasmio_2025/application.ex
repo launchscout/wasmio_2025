@@ -20,7 +20,7 @@ defmodule Wasmio2025.Application do
       {Wasmio2025.ChatServer,
        name: Wasmio2025.ChatRoom,
        path: "wasm/chat-room.wasm",
-       wasi: %Wasmex.Wasi.WasiP2Options{allow_http: true}},
+       wasi: %Wasmex.Wasi.WasiP2Options{}},
       # Start to serve requests, typically the last entry
       Wasmio2025Web.Endpoint
     ]
